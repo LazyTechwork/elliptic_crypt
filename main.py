@@ -3,7 +3,6 @@ from tkinter import *
 from Secret_key import make_keypair, scalar_mult
 
 current_priv, current_pub = make_keypair()
-current_shared = scalar_mult(current_priv, current_pub)
 
 window = Tk()
 window.title("Эллиптическая криптография")
@@ -41,7 +40,7 @@ message_input_label.grid(row=2, column=0, columnspan=2)
 message_input = Text(window, width=50, height=6)
 message_input.grid(row=3, column=0, columnspan=2, pady=10)
 
-sign_key_label = Label(window, text="Ключ подписания")
+sign_key_label = Label(window, text="Публичный ключ собеседника")
 sign_key_label.grid(column=0, row=4, pady=5)
 
 sign_key_field = Entry(window)
@@ -49,9 +48,10 @@ sign_key_field.grid(column=1, row=4, pady=5)
 
 
 def encode():
-    global current_shared
     message = message_input.get("1.0", END).strip()
-    shared_mod = current_shared[0] % 100
+    pub_x, pub_y = map(lambda x: int(x, 16), sign_key_field.get().split(","))
+    shared = scalar_mult(current_priv, (pub_x, pub_y))
+    shared_mod = shared[0] % 100
     print("Secret key %X %X" % (current_shared[0], current_shared[1]))
     print("Shared modificator", shared_mod)
     converted_message = ""
