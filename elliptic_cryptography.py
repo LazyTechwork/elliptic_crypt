@@ -3,6 +3,7 @@ import random
 
 EllipticCurve = collections.namedtuple('EllipticCurve', 'name p a b g n h')
 
+""" Объявление подгруппы на эллиптической кривой """
 curve = EllipticCurve(
     'secp256k1',
     # Характеристика поля
@@ -19,13 +20,16 @@ curve = EllipticCurve(
     h=1,
 )
 
+
 def inverse_mod(k, p):
+    """ Находит обратное число p (1/p) по алгоритму Евклида """
     if k == 0:
         raise ZeroDivisionError('division by zero')
 
     if k < 0:
         return p - inverse_mod(-k, p)
 
+    # Расширенный алгоритм Евклида
     s, old_s = 0, 1
     t, old_t = 1, 0
     r, old_r = p, k
@@ -45,7 +49,7 @@ def inverse_mod(k, p):
 
 
 def is_on_curve(point):
-    """Returns True if the given point lies on the elliptic curve."""
+    """ Возвращает True если заданная точка лежит на эллиптической кривой """
     if point is None:
         return True
 
@@ -55,6 +59,7 @@ def is_on_curve(point):
 
 
 def point_neg(point):
+    """ Нахождение точки, симметричной оси y=p/2 (для нахождения суммы точек)"""
     assert is_on_curve(point)
 
     if point is None:
@@ -69,6 +74,7 @@ def point_neg(point):
 
 
 def point_add(point1, point2):
+    """ Сложение точек на эллиптической кривой """
     assert is_on_curve(point1)
     assert is_on_curve(point2)
 
@@ -99,6 +105,7 @@ def point_add(point1, point2):
 
 
 def scalar_mult(k, point):
+    """ Скалярное умножение """
     assert is_on_curve(point)
 
     if k % curve.n == 0 or point is None:
@@ -124,6 +131,7 @@ def scalar_mult(k, point):
 
 
 def make_keypair():
+    """ Сгенерировать пару ключей """
     private_key = random.randrange(1, curve.n)
     public_key = scalar_mult(private_key, curve.g)
 

@@ -1,6 +1,7 @@
-from tkinter import *
+from tkinter import Label, Tk, END, Text, Entry, Button
 
-from Secret_key import make_keypair, scalar_mult
+from elliptic_cryptography import make_keypair, scalar_mult
+from railfence import encrypt_rail_fence, decrypt_rail_fence
 
 current_priv, current_pub = make_keypair()
 
@@ -16,9 +17,8 @@ private_key_field.grid(column=1, row=0, pady=5)
 
 
 def generate_keypair_event():
-    global current_priv, current_pub, current_shared
+    global current_priv, current_pub
     current_priv, current_pub = make_keypair()
-    current_shared = scalar_mult(current_priv, current_pub)
     public_key_field.delete(0, END)
     public_key_field.insert(0, f'{current_pub[0]:X},{current_pub[1]:X}')
     private_key_field.delete(0, END)
@@ -51,12 +51,11 @@ def encode():
     message = message_input.get("1.0", END).strip()
     pub_x, pub_y = map(lambda x: int(x, 16), sign_key_field.get().split(","))
     shared = scalar_mult(current_priv, (pub_x, pub_y))
-    shared_mod = shared[0] % 100
-    print("Secret key %X %X" % (current_shared[0], current_shared[1]))
-    print("Shared modificator", shared_mod)
+    shared_mod = shared[0] % 1376
     converted_message = ""
+    message = encrypt_rail_fence(message, shared[0] % 10)
     for ch in message:
-        converted_message += "%X " % (ord(ch) + shared_mod)
+        converted_message += "%X " % (ord(ch) + int(str(shared_mod)[::-1]) ** 2)
     message_input.delete("1.0", END)
     message_input.insert("1.0", converted_message)
 
@@ -66,14 +65,12 @@ def decode():
     message = message_input.get("1.0", END).strip().split(" ")
     pub_x, pub_y = map(lambda x: int(x, 16), sign_key_field.get().split(","))
     shared = scalar_mult(current_priv, (pub_x, pub_y))
-    shared_mod = shared[0] % 100
-    print("Secret key %X %X" % (shared[0], shared[1]))
-    print("Shared modificator", shared_mod)
+    shared_mod = shared[0] % 1376
     converted_message = ""
     for ch in message:
-        converted_message += chr(int(ch, 16) - shared_mod)
+        converted_message += chr(int(ch, 16) - int(str(shared_mod)[::-1]) ** 2)
     message_input.delete("1.0", END)
-    message_input.insert("1.0", converted_message.strip())
+    message_input.insert("1.0", decrypt_rail_fence(converted_message, shared[0] % 10).strip())
 
 
 encode_button = Button(window, text="Закодировать", command=encode)
